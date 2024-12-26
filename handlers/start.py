@@ -1,30 +1,36 @@
-from aiogram import Router, F
+from aiogram import F, Router
 from aiogram.filters import CommandStart
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
-from sqlalchemy import select, exists
+from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
+from sqlalchemy import exists, select
 
 from database import User
 from filters.user import UserFilter
 from globals import bot, session
-from handlers.opening import open_main
 
 router = Router()
 
 
 @router.message(CommandStart())
 async def command(message: Message):
-	if session.query(exists(User).where(User.id == message.from_user.id)).scalar():
-		user = session.scalar(select(User).where(User.id == message.from_user.id))
-	else:
-		message = await bot.send_message(message.from_user.id, 'Добро пожаловать!', reply_markup=InlineKeyboardMarkup(
-			inline_keyboard=[[InlineKeyboardButton(text='Главная', callback_data='open_main')]]))
+    if session.query(exists(User).where(User.id == message.from_user.id)).scalar():
+        user = session.scalar(select(User).where(User.id == message.from_user.id))
+    else:
+        user = User(id=message.from_user.id)
+        session.add(user)
+        session.commit()
 
-		user = User(id=message.from_user.id, message_id=message.message_id)
-		session.add(user)
-		session.commit()
+        message = await bot.send_message(message.from_user.id, 'Добро пожаловать!', reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=[[InlineKeyboardButton(text='Главная', callback_data='main')]]))
 
 
-@router.callback_query(F.data == 'open_main', UserFilter())
-async def main(callback: CallbackQuery, user: User):
-	await open_main(user)
-	await callback.answer()
+@router.callback_query(F.data == 'main', UserFilter())
+async def main_callback(callback: CallbackQuery, user: User):
+    await open_main(callback.message, user)
+
+
+async def open_main(message: Message, user: User):
+    await message.edit_text('Главная', reply_markup=InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text='Входящие', callback_data='project inbox')]]
+                        + [[InlineKeyboardButton(text=project.name, callback_data=f'project open {project.id}')]
+                           for project in user.projects]
+                        + [[InlineKeyboardButton(text='Создать', callback_data='project new')]]))

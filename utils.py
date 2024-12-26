@@ -1,2 +1,3 @@
-def get_link_button(text: str, data: str):
-	return f'<a href="t.me/reotasksbot?start={data}">{text}</a>'
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+
+cancel_markup = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text='Отмена', callback_data='cancel')]])
