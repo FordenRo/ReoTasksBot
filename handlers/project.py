@@ -60,10 +60,11 @@ async def open_project(message: Message, project: Project):
     await message.edit_text(project.name, reply_markup=InlineKeyboardMarkup(
         inline_keyboard=[[InlineKeyboardButton(text=task.name, callback_data=f'task open {task.id}')]
                          for task in project.tasks]
-                        + [[InlineKeyboardButton(text='Задача', callback_data=f'task new {project.id}'),
-                            InlineKeyboardButton(text='Папка', callback_data=f'folder new {project.id}')],
-                           [InlineKeyboardButton(text='Назад', callback_data='main'),
-                            InlineKeyboardButton(text='Опции', callback_data=f'project edit {project.id}')]]))
+                        + [[InlineKeyboardButton(text='📝', callback_data=f'task new {project.id}'),
+                            InlineKeyboardButton(text='📂', callback_data=f'folder new {project.id}')],
+                           [InlineKeyboardButton(text='🔙', callback_data='main'),
+                            InlineKeyboardButton(text=f'✏️', callback_data=f'project rename {project.id}'),
+                            InlineKeyboardButton(text='⚙', callback_data=f'project edit {project.id}')]]))
 
 
 async def edit_project(message: Message, project: Project):
