@@ -47,10 +47,16 @@ async def callback(callback: CallbackQuery, user: User, bot: Bot, state: FSMCont
         if project:
             await open_project(callback.message, project)
 
+    async def rename():
+        msg = await bot.send_message(user.id, 'Введите новое название проекта', reply_markup=cancel_markup)
+        await state.set_state(ProjectStates.rename)
+        await state.set_data({'message': msg, 'main': callback.message, 'project_id': id})
+
     types = {'new': lambda: new(),
              'edit': lambda: edit(),
              'delete': lambda: delete(),
-             'open': lambda: open()}
+             'open': lambda: open(),
+             'rename': lambda: rename()}
 
     await types[type]()
     await callback.answer()
@@ -69,9 +75,24 @@ async def open_project(message: Message, project: Project):
 
 async def edit_project(message: Message, project: Project):
     await message.edit_text(project.name, reply_markup=InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text='Переименовать', callback_data=f'project rename {project.id}')],
-                         [InlineKeyboardButton(text='Удалить', callback_data=f'project delete {project.id}')],
-                         [InlineKeyboardButton(text='Назад', callback_data=f'project open {project.id}')]]))
+        inline_keyboard=[[InlineKeyboardButton(text='✏️ Переименовать', callback_data=f'project rename {project.id}')],
+                         [InlineKeyboardButton(text='🗑 Удалить', callback_data=f'project delete {project.id}')],
+                         [InlineKeyboardButton(text='🔙 Назад', callback_data=f'project open {project.id}')]]))
+
+
+@router.message(ProjectStates.rename)
+async def rename_state(message: Message, state: FSMContext):
+    await message.delete()
+    await (await state.get_value('message')).delete()
+    main_message = await state.get_value('main')
+    project_id = await state.get_value('project_id')
+    project = session.scalar(select(Project).where(Project.id == project_id))
+    await state.clear()
+
+    project.name = message.text
+    session.commit()
+
+    await open_project(main_message, project)
 
 
 @router.message(ProjectStates.new, UserFilter())

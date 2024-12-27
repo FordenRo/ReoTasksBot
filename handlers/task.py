@@ -45,11 +45,17 @@ async def callback(callback: CallbackQuery, user: User, bot: Bot, state: FSMCont
         if task:
             await edit_task(callback.message, task)
 
+    async def rename():
+        msg = await bot.send_message(user.id, 'Введите новое название задачи', reply_markup=cancel_markup)
+        await state.set_state(TaskStates.rename)
+        await state.set_data({'message': msg, 'main': callback.message, 'task_id': id})
+
     types = {'new': lambda: new(),
              'open': lambda: open(),
              'subtask': lambda: subtask(),
              'edit': lambda: edit(),
-             'delete': lambda: delete()}
+             'delete': lambda: delete(),
+             'rename': lambda: rename()}
     
     async def delete():
         task = session.scalar(select(Task).where(Task.id == id))
@@ -74,9 +80,25 @@ async def open_task(message: Message, task: Task):
 
 async def edit_task(message: Message, task: Task):
     await message.edit_text(task.name, reply_markup=InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text='Переименовать', callback_data=f'task rename {task.id}')],
-                         [InlineKeyboardButton(text='Удалить', callback_data=f'task delete {task.id}')],
-                         [InlineKeyboardButton(text='Назад', callback_data=f'task open {task.id}')]]))
+        inline_keyboard=[[InlineKeyboardButton(text='✏️ Переименовать', callback_data=f'task rename {task.id}')],
+                         [InlineKeyboardButton(text='🗓 Создать напоминание', callback_data=f'task notify {task.id}')],
+                         [InlineKeyboardButton(text='🗑 Удалить', callback_data=f'task delete {task.id}')],
+                         [InlineKeyboardButton(text='🔙 Назад', callback_data=f'task open {task.id}')]]))
+
+
+@router.message(TaskStates.rename)
+async def rename_state(message: Message, state: FSMContext):
+    await message.delete()
+    await (await state.get_value('message')).delete()
+    main_message = await state.get_value('main')
+    task_id = await state.get_value('task_id')
+    task = session.scalar(select(Task).where(Task.id == task_id))
+    await state.clear()
+
+    task.name = message.text
+    session.commit()
+
+    await open_task(main_message, task)
 
 
 @router.message(TaskStates.new, UserFilter())
