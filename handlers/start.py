@@ -31,7 +31,7 @@ async def main_callback(callback: CallbackQuery, user: User):
 
 async def open_main(message: Message, user: User):
     await message.edit_text('Главная', reply_markup=InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text='Сегодня', callback_data='project today')]]
+        inline_keyboard=[[InlineKeyboardButton(text='🗓 Сегодня', callback_data='project today')]]
                         + [[InlineKeyboardButton(text=project.name, callback_data=f'project open {project.id}')]
                            for project in user.projects]
-                        + [[InlineKeyboardButton(text='Создать', callback_data='project new')]]))
+                        + [[InlineKeyboardButton(text='📝 Создать', callback_data='project new')]]))

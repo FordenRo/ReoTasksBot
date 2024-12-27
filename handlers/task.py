@@ -68,9 +68,11 @@ async def callback(callback: CallbackQuery, user: User, bot: Bot, state: FSMCont
 
 
 async def open_task(message: Message, task: Task):
-    await message.edit_text(f'{task.project.name}\n\n'
+    await message.edit_text('—' * 12 +
+                            f'\n[{task.project.name}/Задача]\n\n'
                             f'{task.name}\n'
-                            f'{task.description}', reply_markup=InlineKeyboardMarkup(
+                            f'{task.description}',
+                            reply_markup=InlineKeyboardMarkup(
         inline_keyboard=[[InlineKeyboardButton(text=subtask.name, callback_data=f'task open {subtask.id}')]
                          for subtask in task.subtasks]
                         + [[InlineKeyboardButton(text='📝', callback_data=f'task subtask {task.id}')],
