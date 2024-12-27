@@ -21,6 +21,7 @@ class Project(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column()
+    editable: Mapped[bool] = mapped_column(default=True)
     tasks: Mapped[list['Task']] = relationship(back_populates='project')
 
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
@@ -32,7 +33,7 @@ class Task(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column()
-    description: Mapped[str] = mapped_column()
+    description: Mapped[str] = mapped_column(default='')
     priority: Mapped[str] = mapped_column(default=0)
     subtasks: Mapped[list['Task']] = relationship(back_populates='parent')
 
