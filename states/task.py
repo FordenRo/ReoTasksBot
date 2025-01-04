@@ -5,3 +5,5 @@ class TaskStates(StatesGroup):
     new = State()
     subtask = State()
     rename = State()
+    notify_type = State()
+    notify_time = State()

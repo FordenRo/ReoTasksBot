@@ -1,3 +1,4 @@
+from enum import auto, Enum
 from typing import Optional
 
 from sqlalchemy import ForeignKey
@@ -35,6 +36,7 @@ class Task(Base):
     name: Mapped[str] = mapped_column()
     description: Mapped[str] = mapped_column(default='')
     priority: Mapped[str] = mapped_column(default=0)
+    notification: Mapped[Optional['Notification']] = relationship(back_populates='task')
     subtasks: Mapped[list['Task']] = relationship(back_populates='parent')
 
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
@@ -45,3 +47,20 @@ class Task(Base):
 
     parent_id: Mapped[int] = mapped_column(ForeignKey('tasks.id'), nullable=True)
     parent: Mapped[Optional['Task']] = relationship(remote_side=id, back_populates='subtasks')
+
+
+class NotificationType(Enum):
+    one = auto()
+    every = auto()
+    weekday = auto()
+
+
+class Notification(Base):
+    __tablename__ = 'notifications'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    type: Mapped['NotificationType'] = mapped_column()
+    time: Mapped[str] = mapped_column()
+
+    task_id: Mapped[int] = mapped_column(ForeignKey('tasks.id'))
+    task: Mapped['Task'] = relationship(back_populates='notification')
